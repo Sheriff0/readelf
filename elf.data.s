@@ -1,11 +1,56 @@
+	.section ".rodata", #alloc
+ET_NONE:
+	.asciz "No File Type"
+	.size ET_NONE, .-ET_NONE
+	.type ET_NONE, %object
+ET_REL:
+	.asciz "Relocatable File"
+	.size ET_REL, .-ET_REL
+	.type ET_REL, %object
+ET_EXEC:
+	.asciz "Executable File"
+	.size ET_EXEC, .-ET_EXEC   
+	.type ET_EXEC, %object
+ET_DYN:
+	.asciz "Shared Object File/Dynamically Linked Library"
+	.size ET_DYN, .-ET_DYN   
+	.type ET_DYN, %object
+ET_CORE:
+	.asciz "Core File"
+	.size ET_CORE, .-ET_CORE
+	.type ET_CORE, %object
+/*__________________________________*/
+	
+
 	.data 0
 	.align 2
-strUA:
-.asciz "Magic","Machine Type","Endianess","ELF Version"
+colDelim:
+.asciz " : "
+
+
+monoSL:
+	.asciz "%s\n"
+biSL:
+	.asciz "%s%s\n"
+triSL:
+	.asciz "%s%s%s\n"
+
+	.align 2
+ei_mag:
+.asciz "EI_MAG(Magic)"
+
+ei_class:
+.asciz "EI_CLASS(Arch Type)"
+
+ei_data:
+.asciz "EI_DATA(Sign Type & Endianess)"
+
+ei_version:
+.asciz "EI_VERSION(Elf Version)"
 	.align 2
 handlers:
   .long getMagic, getMtype, getEndia, getElfV 
-	.size .data, .-strUA
+	.size .data, .-.data
 
 	.section ".bss", #alloc, #write
 	.align 2

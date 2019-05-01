@@ -2,7 +2,6 @@ objs = readElf.o
  
 readElf: $(objs)
 	clang $(objs)
-	rm $(objs)
 
 asms = readElf.s
 

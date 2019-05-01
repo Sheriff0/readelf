@@ -3,93 +3,67 @@
 	.arch armv4t
 	.syntax unified
 	.text 0
+	
+	total .req r5
+    	read  .req r6
+	
 	.include "elf.utils.s"
+    
 .globl main
 	.align 2
 	.type main, %function
 main:	.fnstart
-	stmfd sp!, {r4-r10, fp, lr}
-	mov fp, sp
-	sub sp, sp, #36
+	str lr, [sp, #-4]!
 	ldr r0, [r1, #4]
-	mov r1, #64
+	mov r1, #2
 	bl  open
+	cmn r0, #1
+	beq R_ERR
+	str fp, [sp, #-4]!
+	mov fp, sp
+	sub sp, sp, #12
 	str r0, [fp, #-4]
-	ldr r7, .fns
+	ldr r7, .e_ident
 	add r7, r7, pc
-fns .req r7
-	ldr r5, .strs
-   h0:	
-	add r5, r5, pc
-        ldr r6, .e_ident
-   h1:	
-	add r6, r6, pc
-buff .req r6
-	mov r1, buff
-   h2:	
-	mov r9, buff
-buffOff .req r9
-	mov r2, #16
-   stmia sp, {r5-r7, r9}
-	ldr r0, [fp, #-4]
+	mov r2, #7
+    20:	
+    	mov r1, r7
 	bl  read
-	cmp r0, #0
-	beq e0
-	stmia sp, {r5-r7, r9}
-strs .req r5
-	adr r4, .fmt
-fmt  .req r4
-	adr r8, .delims
-delims .req r8
-	mov r10, #0
-     t0:	
-	mov r0, fmt
-	mov r1, strs
-stmia sp, {fmt, strs, buff, fns, delims, buffOff, r10}
-	bl  printf
-	cmp r0, #0
-	beq e0
-ldmia sp, {fmt, strs, buff, fns, delims, buffOff, r10}
-	add strs, strs, r0
-	add strs, strs, #1
-	mov r0, buffOff
-	ldr r1, [fns]
-	mov lr, pc
-	bx  r1
-	add buffOff, buffOff, r0
-	add fns, fns, #4
-stmia sp, {r1, fmt, strs, buff, fns, delims, buffOff, r10}
-	mov r0, fmt
-	mov r1, delims
-	bl  printf
-ldmia sp, {r1, fmt, strs, buff, fns, delims, buffOff, r10}
-	mov r0, fmt
-stmia sp, {fmt, strs, buff, fns, delims, buffOff, r10}
-	bl  printf
-	mov r0, #10
-	bl  putchar
-ldmia sp, {fmt, strs, buff, fns, delims, buffOff, r10}
-	add r10, r10, #1
-	cmp r10, #4
-	beq e0
-	b   t0
-  e0:
+	cmn r0, #-1
+	beq R_ERR
+	add  r5, r0, r7
 	ldr r0, [fp, #-4]
 	bl  close
+	ldr r4, .handlers
+	add r4, r4, pc
+     1:
+     	mov lr, pc
+    21:	
+	ldr pc, [r4], #4
+	add r7, r7, r1
+	sub r1, r5, r7
+	cmp r1, #0
+	bhi 1b
 	mov sp, fp
-	ldmfd sp!, {r4-r10, fp, lr} 
+	ldmfd sp!, {fp, lr}
 	bx  lr
-.delims:
-	.asciz " : "
-	.align 2
+R_ERR:
+   	bl __errno
+	ldr r0, [r0]
+	bl strerror
+	mov r1, r0
+	adr r0, .fmt
+	bl printf
+	mov r0, #-1
+	ldr lr, [sp], #4
+	mov pc, lr
 .fmt:
-	.asciz "%s"
-	.align 2
-.fns:
-	.long handlers-h0 
-.strs:
-	.long strUA-h1
+    .asciz "%s\n"
+    .align 2
 .e_ident:
-	.long e_ident-h2
+	  .long e_ident-20b
+.handlers:
+	.long handlers-21b
 	.fnend
+	
 	.include "elf.data.s"
