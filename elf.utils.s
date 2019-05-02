@@ -1,7 +1,7 @@
 /*
-*r3 contains control flags passed to functions in the program
-*r3[0] = class(0 for 32bits, 1 for 64bits objects)
-*r3[1]  = data encoding(0 for little, 1 for big)
+*r6 contains control flags passed to functions in the program
+*r6[0] = class(0 for 32bits, 1 for 64bits objects)
+*r6[1]  = data encoding(0 for little, 1 for big)
 *
 */
 
@@ -45,23 +45,35 @@ getEndia: .fnstart
 	 ldrb r3, [r7]
 	 cmp r3, #1
 	 adr r3, little
+	 mov r6, #0 
 	 adrne r3, big
+	 movne r6, #1
 	 ldr r1, 51f
 	 add r1, r1, pc
 	 stmfd sp!, {r0, r2, lr}
+     21:	
+	str r3, [sp, #-4]!
+	 ldr r0, 50f
+	 add r0, r0, pc
+	 adr r3, 30f
      20:
 	 bl  printf
-	 ldmfd sp!, {r0, r2, lr}
+	 ldmib sp!, {r0, r2, lr}
 	 mov r1, #1
 	 bx  lr
 51:
-    .long ei_data-20b
+    .long ei_data-21b
 
-  big:
-	.asciz "2's Complement MSB"
-	.align 1
+30:
+     .asciz "2's Complement"
+     .align 2
+50:
+     .long quadSLB_3-(20b)
+ 
+ big:
+	.asciz "MSB"
 little:
-	.asciz "2's Complement LSB"
+	.asciz "LSB"
 .size getEndia, .-getEndia
 	 .fnend
 
@@ -107,7 +119,7 @@ getElfV:.fnstart
     20:
 	bl  printf
 	ldmfd sp!, {r0, r2, lr}
-	mov r1, #1
+	mov r1, #10
 	bx    lr
    .align 2
 51:
@@ -125,25 +137,32 @@ iv:
 	.type  e_type32_HalfLSB, %function
 	.align 2
 e_type32_HalfLSB: .fnstart
-	ldrh r2, [r0]
-	adr r3, ET_PTR
-	ldr r1, [r3, r2]
-	add r1, r1, pc
-	mov r0, #2
-    1:	
+	ldrh r1, [r7]
+	str r3, [sp, #-4]!
+	ldr r3, [r3, r1, lsl #2]
+	ldr r1, [sp], #4
+	add r3, r3, r1
+	ldmfd sp, {r1, lr}
+	stmfd sp!, {r0, r2, lr}
+	bl  printf
+	ldmfd sp!, {r0, r2, lr}
+	mov r1, #2
 	bx  lr
-
-ET_PTR:
-	.long ET_NONE-1b, ET_REL-1b, ET_EXEC-1b, ET_DYN-1b, ET_CORE-1b 
-	.size ET_PTR, .-ET_PTR
-		.fnend
-/*
+     		.fnend
+	
 	.globl e_type32_HalfMSB
 	.type e_type32_HalfMSB, %function
 e_type32_HalfMSB: .fnstart
-	      bx  lr
-		.fnend
+	str r3, [sp, #-4]!
+	ldrh r1, [r7]
+        mov  r3, r1, lsl #24
+	lsr  r1, r1, #8
+	orr  r1, r1, r3, lsr #16
+	ldr  r3, [sp], #4
+	b    e_type32_HalfLSB+4
+     		.fnend
 
+/*
 	.globl e_type64_HalfLSB
 	.type e_type64_HalfLSB, %function
 e_type64_HalfLSB: .fnstart
@@ -158,29 +177,46 @@ e_type64_HalfMSB: .fnstart
 		.fnend
 
 
-*/
 	.globl e_machine32_HalfLSB
 	.type e_machine32_HalfLSB, %function
-	.align 2
+	*/
+
+/*	.align 2
 e_machine32_HalfLSB: .fnstart
 	ldrh r2, [r0]
 
 		.fnend
+	*/
+
 	.text 0
  	.globl ET_REDIRECTOR
 	.type  ET_REDIRECTOR, %function
 	.align 2
 ET_REDIRECTOR: .fnstart
-	mov r2, r4, lsl #24
-	lsr r2, r2, #24
-	adr r1, ET_HAND
-	ldr r1, [r1, r2]
-     1:	
+	ldr r3, 3f
+	add r3, r3, pc
+	ldr r1, .ei_type
+     4:
 	add r1, r1, pc
-	mov pc, r1
+	stmfd sp!, {r1, lr}
+     2:
+     	mov r1, r6, lsl #24
+	lsr r1, r1, #24
+	adr lr, ET_HAND
+
+	ldr lr, [lr, r1, lsl #2]
+    1:
+    	add lr, lr, pc
+	mov pc, lr
 
 ET_HAND:
-	.long e_type32_HalfLSB-(1b+8)/*, e_type32_HalfMSB-(1b+8), e_type64_HalfLSB-(1b+8), e_type64_HalfMSB-(1b+8)*/
-	.size ET_HAND, .-ET_HAND
+	.long e_type32_HalfLSB-(1b+8), e_type32_HalfMSB-(1b+8) 
+	/*, e_type64_HalfLSB-(1b+8), e_type64_HalfMSB-(1b+8)*/
+     3:
+	.long ET_PTR-4b	
+
+.ei_type:
+         .long ei_type-2b
+
 	   .fnend
 

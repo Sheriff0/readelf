@@ -1,10 +1,10 @@
 objs = readElf.o
  
 readElf: $(objs)
-	clang $(objs)
+	ld -o readelf @arg.txt $(objs)
 
-asms = readElf.s
+asms = readElf.s elf.utils.s elf.data.s
 
 $(objs): $(asms)
-	as -o readElf.o readElf.s
+	as --keep-locals -o readElf.o readElf.s
 

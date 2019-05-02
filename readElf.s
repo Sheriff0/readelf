@@ -4,8 +4,6 @@
 	.syntax unified
 	.text 0
 	
-	total .req r5
-    	read  .req r6
 	
 	.include "elf.utils.s"
     
@@ -25,7 +23,7 @@ main:	.fnstart
 	str r0, [fp, #-4]
 	ldr r7, .e_ident
 	add r7, r7, pc
-	mov r2, #7
+	mov r2, #18
     20:	
     	mov r1, r7
 	bl  read
@@ -41,8 +39,7 @@ main:	.fnstart
     21:	
 	ldr pc, [r4], #4
 	add r7, r7, r1
-	sub r1, r5, r7
-	cmp r1, #0
+	cmp r5, r7
 	bhi 1b
 	mov sp, fp
 	ldmfd sp!, {fp, lr}

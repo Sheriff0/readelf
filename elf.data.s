@@ -1,4 +1,8 @@
 	.section ".rodata", #alloc
+	.align 2
+ET_PTR:
+	.long ET_NONE-ET_PTR, ET_REL-ET_PTR, ET_EXEC-ET_PTR, ET_DYN-ET_PTR, ET_CORE-ET_PTR 
+
 ET_NONE:
 	.asciz "No File Type"
 	.size ET_NONE, .-ET_NONE
@@ -34,7 +38,8 @@ biSL:
 	.asciz "%s%s\n"
 triSL:
 	.asciz "%s%s%s\n"
-
+quadSLB_3:
+	.asciz "%s%s%s %s\n"
 	.align 2
 ei_mag:
 .asciz "EI_MAG(Magic)"
@@ -47,9 +52,12 @@ ei_data:
 
 ei_version:
 .asciz "EI_VERSION(Elf Version)"
+
+ei_type:
+.asciz "Object File Type"
 	.align 2
 handlers:
-  .long getMagic, getMtype, getEndia, getElfV 
+  .long getMagic, getMtype, getEndia, getElfV, ET_REDIRECTOR
 	.size .data, .-.data
 
 	.section ".bss", #alloc, #write
@@ -82,6 +90,6 @@ EI_DATA:
 EI_VERSION:
 	    .byte 0
 EI_PAD:
-	.space EI_NIDENT-7, 0 
+	.space 18, 0 
 	.size  e_ident, EI_NIDENT
 	.size .bss, EI_NIDENT
